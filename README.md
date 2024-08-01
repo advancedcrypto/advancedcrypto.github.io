@@ -1,2 +1,1 @@
-# advancedcrypto.github.io
-Course website
+# 6.5630 Advanced Cryptography (Fall 2024)

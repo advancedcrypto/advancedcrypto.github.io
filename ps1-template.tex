@@ -1,0 +1,112 @@
+\documentclass[11pt]{article}
+
+\input{preamble.tex}
+\input{macros.tex}
+
+    
+\renewcommand{\O}{\mathcal{O}}
+\newcommand{\zo}{\{0,1\}}
+
+\newcommand{\inorm}[1]{\norm{#1}_\infty}
+
+\def\LWE{\mathsf{LWE}}
+\def\RLWE{\mathsf{Ring\text{-}LWE}}
+\def\vecbt{\tilde{\vecb}}
+
+
+
+\def\Prep{\mathsf{Prep}}
+\def\Resp{\mathsf{Resp}}
+\def\Query{\mathsf{Query}}
+\def\Resp{\mathsf{Resp}}
+\def\Process{\mathsf{Process}}
+\def\Eval{\mathsf{Eval}}
+
+\title{\textbf{6.5630 Advanced Topics in Cryptography} \\ Problem Set 1 \\ Due: October 7, 2024}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+
+\section{Minkowski is Tight [15 points]}
+Minkowski's theorem is tight for general lattices. In particular, there is a family of lattices $\{\lat_n\}_{n\in\mathbb{N}}$ where $\lat_n$ lives in $n$ dimensions, and
+\[ \lambda_1(\lat_n) \geq c\cdot \sqrt{n} \cdot \det(\lat_n)^{1/n} \]
+where $c$ is a universal constant independent of $n$.
+Show that such a family of lattices exists (your proof doesn't have to construct this family, you merely have to show existence). \textcolor{gray}{{\em Hint:} Try the SIS lattice. That is, pick a random $\matA \in \Zq^{n\times m}$ and look at the lattice $\Lambda^{\perp}(\matA) := \{\vecx: \matA \vecx = 0 \pmod{q}\}$. You can use the following fact:  if $\matA$ has rank $n$ over $\Zq$, then the determinant of $\Lambda^{\perp}(\matA)$ is $q^{n}$.}
+
+\medskip\noindent
+\textbf{Optional.} Same problem except show an explicit construction of such a family of lattices $\{\lat_n\}_{n\in\mathbb{N}}$.
+
+
+\section{(Our Analysis of) LLL is Tight [15 points]}
+(For a refresher on the LLL algorithm, look at the notes for Lecture 2.)
+
+\medskip\noindent
+Let $\delta = 3/4$. Find a $\delta$-LLL reduced basis $\vecb_1,\ldots,\vecb_n \in \mathbb{R}^n$  such that $\vecb_1$ is longer than the shortest vector by a factor of $\Theta(2^{n/2})$. In other words, our analysis of the LLL algorithm using LLL reduced bases is tight.
+
+
+
+\section{Cheap Gaussian Sampling? [15 points]}
+
+Consider the following algorithm for sampling from the zero-centered discrete Gaussian distribution $D_{\lattice,s}$. Assume we have a good basis $\matB$ of $\lattice$. The algorithm samples a point from the continuous Gaussian distribution $\rho_{s}(x)/s^n$, rounds it to a nearby lattice point (say, using Babai’s rounding algorithm), and outputs
+the result. 
+
+Show that the output of this algorithm is statistically quite far from $D_{\lattice,s}$, even for
+radii $s$ that are polynomially bigger than the length of the given basis.
+\textcolor{gray}{{\em Hint:} Try $\mathbb{Z}$.}
+
+
+
+\section{Spooky Encryption (20 points)}
+\newcommand{\Spook}{\mathsf{Spook}}
+
+Fully homomorphic encryption tells us how to transform an encrypted input $c \in \Enc_{\pk}(x)$ into an encrypted output $c' \in \Enc_{\pk}(f(x))$ for any polynomial-time computable function $f$. Suppose you are now given $$c_1 \in \Enc_{\pk_1}(x_1) \mbox{  and  } c_2 \in \Enc_{\pk_2}(x_2)$$ for {\em independent} public keys $\pk_1$ and $\pk_2$ and some $x_1,x_2$. 
+
+
+\begin{itemize} 
+\item  Could one now compute an encryption of $f(x_1,x_2)$ under either $\pk_1$ or $\pk_2$?  Show a function $f$ such that being able to do so for any $x_1,x_2$ will violate the IND-CPA security of the encryption scheme. 
+
+\item Starting with the GSW FHE scheme we saw in class, construct an FHE scheme where one can produce two ciphertexts $c_1'$ and $c_2'$ such that 
+$$ \Dec_{\sk_1}(c_1') \oplus \Dec_{\sk_2}(c_2') = f(x_1,x_2)$$
+\end{itemize}
+
+
+\section{If Pigs Fly...? [20 points]}
+The goal of private information retrieval (PIR) is for a client to obtain the $i$'th bit of a database $D \in \zo^N$ from server, without the server learning anything about $i$. 
+\begin{definition}[Private Information Retrieval]
+    A PIR scheme consists of four (potentially randomized) algorithms $\Prep$, $\Query$, $\Resp$, and $\Dec$, which are run in the following order:
+\begin{enumerate}
+    \item \textbf{Prep.} The server preprocesses the dataset by computing $\tilde{D} \gets \Prep(D)$. (This step is done once and for all by the server.)
+    \item \textbf{Query.} To query index $i \in [N]$, the client computes $(q, s) \gets \Query(i, 1^\lambda)$ and sends $q$ to the server. ($s$ is some private state that the client keeps to herself.)
+    \item \textbf{Respond.} The server sends $a \gets \Resp(q, \tilde{D})$ back to the client. (Here, $\Resp$ has random access to its inputs, so it can potentially run in sublinear time)
+    \item \textbf{Decode.} Client computes $b  \gets \Dec(a, s)$.
+\end{enumerate}
+We require that the scheme has the following two properties: \begin{itemize}
+    \item  \textbf{Correct:} In the notation above, for all $i$, we have $b = D_i$ with probability one. 
+    \item \textbf{Secure:} for all $i, i' \in [N]$, the distributions $\Query(i, 1^\lambda)$ and $\Query(i', 1^\lambda)$ are computationally indistinguishable. 
+\end{itemize}
+\end{definition}
+
+\noindent
+We ask you to prove the following:
+\begin{enumerate}
+    \item Show that if no preprocessing is done (i.e., $\tilde{D} = D$) by a PIR scheme, then $\Resp(q, \tilde{D})$ needs to run in $\Omega(N)$ time. 
+    \item Assuming a ``strongly preprocessable'' (defined below) homomorphic encryption scheme exists, construct a PIR scheme where $\Query$, $\Resp$, and $\Dec$ run in $\poly (\log N)$ time and $\Prep$ runs in $\poly(N)$ time.
+\end{enumerate}
+
+\begin{definition}[Strongly Preprocessable Homomorphic Encryption Scheme]
+    A fully homomorphic encryption scheme is strongly preprocessable if there are deterministic algorithms $\Process$ and $\Eval$ such that both of the following hold: 
+\begin{itemize}
+    \item given a circuit $C: \zo^n \to \zo$ of size $s$ (which can be much larger than $n$), $\Process(C)$ runs in $\poly(s,n)$-time and outputs a string $\tilde{C}$, and 
+    \item if $ct$ is an encryption of $x \in \zo^n$, then $\Eval(ct, \tilde{C})$ runs in $\poly(n)$-time (note this is independent of s!!)  and outputs an encryption of $C(x)$. Here, $Eval$ is given random access to $\tilde{C}$.
+\end{itemize}
+\end{definition}
+
+
+
+
+\end{document}
+

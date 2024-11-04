@@ -1,0 +1,146 @@
+\documentclass[11pt]{article}
+
+\input{preamble.tex}
+\input{macros.tex}
+
+\usepackage{microtype}      % microtypography
+\usepackage{libertine}
+\usepackage{libertinust1math}
+
+
+\renewcommand{\O}{\mathcal{O}}
+\newcommand{\zo}{\{0,1\}}
+
+\newcommand{\inorm}[1]{\norm{#1}_\infty}
+
+\def\LWE{\mathsf{LWE}}
+\def\RLWE{\mathsf{Ring\text{-}LWE}}
+\def\vecbt{\tilde{\vecb}}
+
+\newcommand{\D}{\mathcal{D}}
+\newcommand{\iO}{iO}
+\newcommand{\diO}{diO}
+\newcommand{\Hash}{\mathsf{Hash}}
+\newcommand{\Invert}{Invert}
+
+
+\title{\textbf{6.5630 Advanced Topics in Cryptography} \\ Problem Set 2 \\ Due: November 25, 2024}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\noindent
+The focus of this problem set is a notion called \emph{differing inputs obfuscation} ($\diO$). Informally, it strengthens indistinguishability obfuscation ($\iO$) by guaranteeing that obfuscations of two circuits are  computationally indistinguishable as long as it is hard to find an input on which the two circuits output different values. In other words, if there is a distinguisher that distinguishes between $\diO(C)$ and $\diO(C')$, then there is an algorithm that finds an input $x$ such that $C(x) \neq C'(x)$.
+
+\begin{definition}[Distributions on Pseudo-equivalent Circuits]
+    Let $\D_n$ be a sequence of distributions (indexed by $n$) on pairs of $n$-input circuits $(C,C')$ of the same size $s=s(n)$. We say $\D_n$ is a \emph{PEC-distribution} if for every probabilistic polynomial-time (p.p.t.) algorithm $B$, we have
+    \[\Pr[C(x) \neq C'(x)\ |\ (C, C') \gets \D_n;\  x \gets B(C, C') ] \leq |C|^{-\omega(1)}.\]
+\end{definition}
+
+\noindent
+That is, the probability that a p.p.t. algorithm $B$ finds a differing input in a pair of randomly chosen circuits $(C,C')$ from the distribution $\mathcal{D}_n$ is small.
+
+\begin{definition}[Differing Inputs Obfuscation]
+    An indistinguishability obfuscator $\O$ is a differing inputs obfuscator for a PEC-distribution $\D_n$ if $\O(C_0)$ and $\O(C_1)$ are computationally indistinguishable when $(C_0, C_1) \gets \D_n$.
+    We say $\O$ is a \emph{differing inputs obfuscator} (without specifying a distribution) if it is a differing inputs obfuscator for every PEC-distribution.
+\end{definition}
+\noindent
+
+\medskip
+\noindent
+\textit{Notes on the security parameter:}
+\begin{itemize}
+    \item When we say two distributions $D_1$ and $D_2$ are computationally indistinguishable (denoted $D_1 \approx_c D_2$), we mean that any adversary that runs in time polynomial in $\lambda$ has at most a negligible in $\lambda$ advantage in distinguishing between $D_1$ and $D_2$.
+
+    \item In this problem set, we omit writing the security parameter for obfuscation algorithms $\O$, letting $\O(C)$ denote $\O(C, 1^{\lambda = |C|})$. (If one wishes to have a larger security parameter, one can always pad $C$ with extra dummy gates, which do not change the functionality.)
+
+\end{itemize}
+
+\section{Baby $\diO$}
+It is an open question whether a differing inputs obfuscator exists. Here, we ask you to prove a special case.
+
+\begin{enumerate}
+    \item Assuming indistinguishability obfuscation exists, show that there exists an $\O$ such that for all PEC-distributions $\D_n$ satisfying
+    \[\max _n \max_{(C, C') \gets \D_n} \left | \{x \in \zo^n: C(x) \neq C'(x)\} \right | \leq 1,\]
+    $\O$ is a differing inputs obfuscator for $\D_n$.
+\end{enumerate}
+
+
+\section{$\iO$ is Best Possible Obfuscation}
+There is a certain sense in which an indistinguishability obfuscator $\O$ is a ``best possible'' obfuscator, meaning roughly that if any obfuscator with a security property $\Pi$ exists, then $\O$ (with a sufficient amount of padding) also has security property $\Pi$.
+Fully formalizing this is beyond the scope of this problem set, but we ask you to prove a special case.
+
+For a circuit $C$ and a natural number $q \geq |C|$, let $Pad(C, q)$ denote the circuit obtained by padding $C$ with dummy gates to a obtain an equivalent circuit of size $q$.
+
+\begin{enumerate}
+    \item Assume there exists a differing inputs obfuscator. Show that for every indistinguishability obfuscator $\O$ there exists a polynomial $p$ such that the algorithm $\O_p$ given by $\O_p(C) = \O(Pad(C, p(|C|)))$ is also a differing inputs obfuscator.
+\end{enumerate}
+
+
+
+\section{Put Your Money Where Your Mouth Is (Part 1)}
+Sometimes when it looks like we need a differing inputs obfuscator, we can get by using indistinguishability obfuscator and other cryptographic objects. The combination of the next three problems will give an example of this.
+
+A confident cryptographer wants to offer a prize (perhaps some cryptocurrency) to anyone who can break certain cryptographic assumptions. Specifically,  anyone who finds a non-zero $x$ that hashes to the same value that the all-zeroes string hashes to (hence, breaking the security of the hash function) should be able to see a secret message. On the other hand, it should be such that, if certain cryptographic assumptions are true, it is infeasible for anyone to claim the prize.
+
+You will show that some version of this is possible, if a differing inputs obfuscator exists. (Note: think about why witness encryption alone does not suffice.)
+
+\begin{enumerate}
+    \item Assume a differing inputs obfuscator exists. Assume $H_k: \zo^{2\lambda} \to \zo^\lambda$ is a collision resistant hash family indexed by $k \in \zo^\lambda$. Show there are polynomial time functions $\Enc(k, b)$ and $\Dec(x, C)$ such that
+    \begin{itemize}
+        \item \textbf{Functionality:} For all $k \in \zo^\lambda$ and $b \in \zo$ and for all non-zero $x \in \zo^{2\lambda}$ satisfying $H_k(x) = H_k(0^{2\lambda})$
+        \[\Pr[\Dec(x, \Enc(k, b)) = b] = 1.\]
+        \item \textbf{Security:} When $k \gets \zo^\lambda$ we have
+\[(k, \Enc(k, 0))) \approx_c (k, \Enc(k, 1))).\]
+    \end{itemize}
+\end{enumerate}
+
+
+
+
+\section{Somewhere Statistically Binding Hash Functions}
+We would like to to replace $\diO$ in the last problem with $\iO$. To do this, here (and in many applications) cryptographers use an ``$\iO$ friendly'' version of collision resistant hash functions called \emph{somewhere statistically binding hash functions}.
+
+\begin{definition}[Somewhere Statistically Binding (SSB) Hash Functions]
+An SSB Hash Family consists of two polynomial time algorithms $\Hash$ and $\Gen$ with the following properties:
+\begin{itemize}
+    \item \textbf{Key Generation: }$\Gen$ takes as input a security parameter $\lambda$ and an index $i \in [2\lambda]$ and outputs a key $k$.
+    \item \textbf{Shrinking:} $\Hash$ takes as input a key $k$ and a string $x \in \zo^{2\lambda}$ and outputs a hash $v$ of length at most $\lambda$. For succinctness, we write $H_k(x) = \Hash(k, x)$.
+    \item \textbf{Binding on $i$:} If $k \gets Gen(1^\lambda, i)$, then (with probability one) $H_k(x) \neq H_k(y)$ for all $x, y \in \zo^{2\lambda}$ that differ on their $i$'th bit. (Equivalently, there exists a (possibly inefficient) function that given $H_k(x)$, outputs the $i$'th bit of $x$.)
+     \item \textbf{Binding Indistinguishable:} For all $i, j \in [\lambda]$, we have that the outputs of $Gen(1^\lambda, i)$ and $Gen(1^\lambda, j)$ are computationally indistinguishable.
+\end{itemize}
+\end{definition}
+
+We ask you to construct this object and show it is at least a collision resistant hash function.
+\begin{enumerate}
+    \item Show that if a fully homomorphic encryption scheme (you may use properties of the GSW scheme we saw in class if you wish) exists, then an SSB hash family exists.
+    \item Show that every SSB hash family is also collision resistant hash family.
+\end{enumerate}
+
+
+
+
+\section{Put Your Money Where Your Mouth Is (Part 2)}
+
+Now we will accomplish problem 3, just using $\iO$ (assuming $H_k$ is an SSB Hash function).
+
+\begin{enumerate}
+    \item Let $H_k$ be an SSB Hash family. Assume indistinguishability obfuscation exists. Show there are polynomial time functions $\Enc(k, b)$ and $\Dec(x, C)$ such that
+    \begin{itemize}
+        \item \textbf{Functionality:} For all $k \in \zo^\lambda$ and $b \in \zo$ and for all non-zero $x \in \zo^{2\lambda}$ satisfying $H_k(x) = H_k(0^{2\lambda})$
+        \[\Pr[\Dec(x, \Enc(k, b)) = b] = 1.\]
+        \item \textbf{Security:} When $k \gets \Gen(1^\lambda, i = 1)$, we have
+        \[(k, \Enc(k, 0))) \approx_c (k, \Enc(k, 1))).\]
+    \end{itemize}
+\end{enumerate}
+
+
+\noindent
+ \emph{Hint: Try using hybrids that alternate between using $\iO$ security and binding indistinguishability until you can remove $b$ from the circuit entirely.}
+
+
+
+\end{document}
